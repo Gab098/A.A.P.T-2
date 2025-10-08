@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vision-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vision-worker
+  template:
+    metadata:
+      labels:
+        app: vision-worker
+    spec:
+      containers:
+        - name: vision-worker
+          image: aapt/vision_worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw

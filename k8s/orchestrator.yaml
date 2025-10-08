@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: aapt/orchestrator:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: ORCH_HEALTH_PORT
+              value: "8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator
+  namespace: aapt
+spec:
+  selector:
+    app: orchestrator
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

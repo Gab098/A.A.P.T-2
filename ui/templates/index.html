@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.A.P.T. Framework - Cyber Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>A.A.P.T.</h1>
+                <span class="subtitle">Advanced Agent Penetration Testing</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Control Panel -->
+            <section class="control-panel">
+                <h2>Control Panel</h2>
+                <div class="scan-form">
+                    <div class="input-group">
+                        <label for="target-input">Target</label>
+                        <input type="text" id="target-input" placeholder="scanme.nmap.org" class="cyber-input">
+                    </div>
+                    <button id="scan-btn" class="cyber-button">
+                        <span class="button-text">Start Scan</span>
+                        <div class="button-glow"></div>
+                    </button>
+                </div>
+                <div class="quick-targets">
+                    <h3>Quick Targets</h3>
+                    <div class="target-buttons">
+                        <button class="quick-target-btn" data-target="scanme.nmap.org">scanme.nmap.org</button>
+                        <button class="quick-target-btn" data-target="testphp.vulnweb.com">testphp.vulnweb.com</button>
+                        <button class="quick-target-btn" data-target="httpbin.org">httpbin.org</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Panel -->
+            <section class="results-panel">
+                <h2>Live Results</h2>
+                <div class="results-container">
+                    <div id="results-list" class="results-list">
+                        <div class="no-results">
+                            <div class="no-results-icon">🔍</div>
+                            <p>No scans yet. Start a scan to see results here.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interesting Targets Panel -->
+            <section class="interesting-panel">
+                <h2>Obiettivi Interessanti</h2>
+                <button id="export-burp-btn" class="cyber-button" style="float:right;margin-bottom:1em;">Esporta per Burp</button>
+                <button id="export-json-btn" class="cyber-button" style="float:right;margin-bottom:1em;margin-right:1em;">Esporta JSON</button>
+                <div id="interesting-list" class="interesting-list">
+                    <div class="no-interesting">
+                        <div class="no-interesting-icon">🎯</div>
+                        <p>Nessun obiettivo interessante al momento.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Status -->
+            <section class="system-status">
+                <h2>System Status</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <h3>RabbitMQ</h3>
+                        <div class="status-value" id="rabbitmq-status">Checking...</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Results Count</h3>
+                        <div class="status-value" id="results-count">0</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Last Update</h3>
+                        <div class="status-value" id="last-update">-</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Pulsante per aprire il grafo -->
+    <button id="open-graph-btn" class="cyber-button" style="position:fixed;bottom:30px;right:30px;z-index:1000;">
+        Visualizza Grafo
+    </button>
+
+    <!-- Popup Modal Grafo -->
+    <div id="graph-modal" class="graph-modal hidden">
+        <div class="graph-modal-content">
+            <span id="close-graph-btn" class="close-graph-btn">&times;</span>
+            <h2>Network Graph (Neo4j)</h2>
+            <div id="graph" style="width:100%;height:600px;border:1px solid #333;background:#181818;"></div>
+        </div>
+    </div>
+    <div id="graph-controls" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div>
+            <label for="node-type-filter" style="color:#fff;">Filtra nodi:</label>
+            <select id="node-type-filter">
+                <option value="">Tutti</option>
+                <option value="Host">Host</option>
+                <option value="Service">Service</option>
+                <option value="Vulnerability">Vulnerability</option>
+                <option value="Shell">Shell</option>
+                <option value="Finding">Finding</option>
+            </select>
+        </div>
+        <div>
+            <label for="edge-type-filter" style="color:#fff;">Filtra relazioni:</label>
+            <select id="edge-type-filter">
+                <option value="">Tutte</option>
+                <option value="RUNS_SERVICE">RUNS_SERVICE</option>
+                <option value="IS_VULNERABLE_TO">IS_VULNERABLE_TO</option>
+                <option value="HAS_SHELL">HAS_SHELL</option>
+                <option value="HAS_FINDING">HAS_FINDING</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Scanning target...</p>
+        </div>
+    </div>
+
+    <!-- Exploit Detail Modal -->
+    <div id="exploit-detail-modal" class="exploit-detail-modal hidden">
+        <div class="exploit-detail-modal-content">
+            <span id="close-exploit-detail-btn" class="close-exploit-detail-btn">&times;</span>
+            <h3>Dettagli Exploit Chain & Asset Compromessi per <span id="exploit-detail-target"></span></h3>
+            <div class="detail-section">
+                <h4>Exploit Chain Results</h4>
+                <pre id="exploit-chain-json"></pre>
+            </div>
+            <div class="detail-section">
+                <h4>Compromised Assets</h4>
+                <ul id="compromised-assets-list"></ul>
+            </div>
+            <div class="detail-section">
+                <h4>Full Asset Data</h4>
+                <pre id="full-asset-json"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden">
+        <span id="notification-text"></span>
+    </div>
+
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+    // Popup logic
+    const openGraphBtn = document.getElementById('open-graph-btn');
+    const graphModal = document.getElementById('graph-modal');
+    const closeGraphBtn = document.getElementById('close-graph-btn');
+    const graphControls = document.getElementById('graph-controls');
+    const nodeTypeFilter = document.getElementById('node-type-filter');
+    const edgeTypeFilter = document.getElementById('edge-type-filter');
+    let network = null;
+    let allNodes = [];
+    let allEdges = [];
+    openGraphBtn.onclick = function() {
+        graphModal.classList.remove('hidden');
+        graphControls.style.display = 'flex';
+        // Carica e visualizza il grafo solo quando si apre
+        fetch('/api/graph')
+          .then(res => res.json())
+          .then(data => {
+            allNodes = data.nodes.map(n => ({
+              id: n.id,
+              label: (n.labels[0] || '') + '\n' + (n.properties.ip || n.properties.name || n.properties.id || ''),
+              title: `<b>Tipo:</b> ${n.labels[0] || ''}<br>` + Object.entries(n.properties).map(([k,v]) => `<b>${k}:</b> ${v}`).join('<br>'),
+              color: n.labels.includes('Host') ? '#2196f3' :
+                     n.labels.includes('Service') ? '#4caf50' :
+                     n.labels.includes('Vulnerability') ? '#f44336' :
+                     n.labels.includes('Shell') ? '#9c27b0' :
+                     n.labels.includes('Finding') ? '#ff9800' : '#bdbdbd'
+            }));
+            allEdges = data.edges.map(e => ({
+              from: e.from,
+              to: e.to,
+              label: e.type,
+              title: `<b>Relazione:</b> ${e.type}<br>` + Object.entries(e.properties).map(([k,v]) => `<b>${k}:</b> ${v}`).join('<br>')
+            }));
+            renderGraph();
+          });
+    };
+    function renderGraph() {
+        const nodeType = nodeTypeFilter.value;
+        const edgeType = edgeTypeFilter.value;
+        const filteredNodes = nodeType ? allNodes.filter(n => n.label.startsWith(nodeType)) : allNodes;
+        const nodeIds = new Set(filteredNodes.map(n => n.id));
+        const filteredEdges = edgeType ? allEdges.filter(e => e.label === edgeType && nodeIds.has(e.from) && nodeIds.has(e.to)) : allEdges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
+        const container = document.getElementById('graph');
+        container.innerHTML = '';
+        network = new vis.Network(container, {
+            nodes: new vis.DataSet(filteredNodes),
+            edges: new vis.DataSet(filteredEdges)
+        }, {
+            physics: {stabilization: false},
+            interaction: {hover: true, tooltipDelay: 100}
+        });
+        // Zoom automatico sul nodo selezionato
+        network.on('selectNode', function(params) {
+            if(params.nodes.length > 0) {
+                network.focus(params.nodes[0], {scale: 1.2, animation: true});
+            }
+        });
+    }
+    nodeTypeFilter.onchange = renderGraph;
+    edgeTypeFilter.onchange = renderGraph;
+    closeGraphBtn.onclick = function() {
+        graphModal.classList.add('hidden');
+        document.getElementById('graph').innerHTML = '';
+        graphControls.style.display = 'none';
+    };
+    window.onclick = function(event) {
+        if (event.target === graphModal) {
+            graphModal.classList.add('hidden');
+            document.getElementById('graph').innerHTML = '';
+            graphControls.style.display = 'none';
+        }
+    };
+
+    // Obiettivi Interessanti
+    let lastInterestingIds = new Set();
+    function renderInterestingTargets() {
+        fetch('/api/interesting_targets')
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('interesting-list');
+                container.innerHTML = '';
+                if (!data.length) {
+                    container.innerHTML = `<div class='no-interesting'><div class='no-interesting-icon'>🎯</div><p>Nessun obiettivo interessante al momento.</p></div>`;
+                    lastInterestingIds = new Set();
+                    return;
+                }
+                data.forEach(obj => {
+                    const badge = obj.priority === 'high' ? '🔴' : obj.priority === 'medium' ? '🟡' : '🟢';
+                    const div = document.createElement('div');
+                    div.className = 'interesting-item';
+                    let tiDetails = '';
+                    if (obj.threat_intelligence && Object.keys(obj.threat_intelligence).length > 0) {
+                        const vt = obj.threat_intelligence.virustotal;
+                        const abuse = obj.threat_intelligence.abuseipdb;
+                        if (vt && vt.data && vt.data.last_analysis_stats) {
+                            tiDetails += `<span class='ti-badge vt-badge'>VT: ${vt.data.last_analysis_stats.malicious}</span>`;
+                        }
+                        if (abuse && abuse.data && abuse.data.abuseConfidenceScore !== undefined) {
+                            tiDetails += `<span class='ti-badge abuse-badge'>AbuseIPDB: ${abuse.data.abuseConfidenceScore}%</span>`;
+                        }
+                    }
+                    let exploitChainDetails = '';
+                    if (obj.exploit_chain_results && Object.keys(obj.exploit_chain_results).length > 0) {
+                        const status = obj.exploit_chain_results.status;
+                        const compromisedCount = obj.compromised_assets ? obj.compromised_assets.length : 0;
+                        exploitChainDetails += `<span class='ec-badge ec-status-${status}'>EC: ${status}</span>`;
+                        if (compromisedCount > 0) {
+                            exploitChainDetails += `<span class='ec-badge ec-compromised'>Compromessi: ${compromisedCount}</span>`;
+                        }
+                    }
+
+                    div.innerHTML = `
+                        <span class='interesting-badge'>${badge}</span>
+                        <span class='interesting-ip'>${obj.ip || obj.domain}</span>
+                        <span class='interesting-motivation'>${obj.motivation || ''}</span>
+                        <div class='threat-intel-details'>${tiDetails}</div>
+                        <div class='exploit-chain-details'>${exploitChainDetails}</div>
+                        <button class='interesting-action' data-ip='${obj.ip || obj.domain}' data-full-asset='${JSON.stringify(obj.full_asset_data)}'>Azioni</button>
+                        <button class='exploit-detail-btn' data-ip='${obj.ip || obj.domain}' data-exploit-chain='${JSON.stringify(obj.exploit_chain_results)}' data-compromised-assets='${JSON.stringify(obj.compromised_assets)}' data-full-asset='${JSON.stringify(obj.full_asset_data)}'>Dettagli</button>
+                    `;
+                    container.appendChild(div);
+                });
+                // Notifiche real-time per nuovi high/critical
+                const newHighCritical = data.filter(obj => (obj.priority === 'high' || obj.priority === 'critical') && !lastInterestingIds.has(obj.ip));
+                newHighCritical.forEach(obj => {
+                    showNotification(`🔴 Nuovo obiettivo critico: ${obj.ip || obj.domain} - ${obj.motivation}`);
+                });
+                lastInterestingIds = new Set(data.map(obj => obj.ip));
+                // Azioni avanzate: mostra modale
+                document.querySelectorAll('.interesting-action').forEach(btn => {
+                    btn.onclick = function() {
+                        const target = btn.getAttribute('data-ip');
+                        showActionModal(target);
+                    };
+                });
+                // Dettagli Exploit Chain: mostra modale
+                document.querySelectorAll('.exploit-detail-btn').forEach(btn => {
+                    btn.onclick = function() {
+                        const target = btn.getAttribute('data-ip');
+                        const exploitChain = JSON.parse(btn.getAttribute('data-exploit-chain'));
+                        const compromisedAssets = JSON.parse(btn.getAttribute('data-compromised-assets'));
+                        const fullAssetData = JSON.parse(btn.getAttribute('data-full-asset'));
+                        showExploitDetailModal(target, exploitChain, compromisedAssets, fullAssetData);
+                    };
+                });
+            });
+    }
+    setInterval(renderInterestingTargets, 10000);
+    renderInterestingTargets();
+
+    // Modale Azioni Avanzate
+    function showActionModal(target) {
+        let modal = document.getElementById('action-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'action-modal';
+            modal.className = 'action-modal';
+            modal.innerHTML = `
+                <div class='action-modal-content'>
+                    <span class='close-action-modal'>&times;</span>
+                    <h3>Azioni Avanzate per <span id='action-modal-target'></span></h3>
+                    <label for='action-type'>Azione:</label>
+                    <select id='action-type'>
+                        <option value='nuclei_scan'>Nuclei (template custom)</option>
+                        <option value='nmap_scan'>Nmap (porte custom)</option>
+                        <option value='msf_exploit'>MSF Exploit</option>
+                        <option value='threat_intel_lookup'>Threat Intel Lookup</option>
+                        <option value='exploit_adaptation'>Exploit Chain Generation</option>
+                    </select>
+                    <div id='action-params'></div>
+                    <button id='launch-action-btn' class='cyber-button'>Lancia</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        document.getElementById('action-modal-target').textContent = target;
+        modal.classList.remove('hidden');
+        // Parametri dinamici
+        const paramsDiv = document.getElementById('action-params');
+        function renderParams() {
+            const type = document.getElementById('action-type').value;
+            if (type === 'nuclei_scan') {
+                paramsDiv.innerHTML = `<label>Templates (es: cves,apache):</label><input id='param-templates' type='text' placeholder='cves,apache'>`;
+            } else if (type === 'nmap_scan') {
+                paramsDiv.innerHTML = `<label>Porte (es: 80,443,8080):</label><input id='param-ports' type='text' placeholder='80,443,8080'>`;
+            } else if (type === 'msf_exploit') {
+                paramsDiv.innerHTML = `<label>Exploit:</label><input id='param-exploit' type='text' placeholder='exploit/linux/http/apache_mod_cgi_bash_env_exec'><br><label>Payload:</label><input id='param-payload' type='text' placeholder='linux/x86/meterpreter/reverse_tcp'>`;
+            } else if (type === 'threat_intel_lookup') {
+                paramsDiv.innerHTML = ``; // No specific parameters for now, target is enough
+            } else if (type === 'exploit_adaptation') {
+                paramsDiv.innerHTML = `<label>CVEs (comma separated):</label><input id='param-cves' type='text' placeholder='CVE-2021-1234,CVE-2022-5678'>`;
+            }
+            else {
+                paramsDiv.innerHTML = '';
+            }
+        }
+        renderParams();
+        document.getElementById('action-type').onchange = renderParams;
+        // Lancia azione
+        document.getElementById('launch-action-btn').onclick = function() {
+            const type = document.getElementById('action-type').value;
+            let parameters = {};
+            if (type === 'nuclei_scan') {
+                parameters.templates = document.getElementById('param-templates').value;
+            } else if (type === 'nmap_scan') {
+                parameters.ports = document.getElementById('param-ports').value;
+            } else if (type === 'msf_exploit') {
+                parameters.exploit = document.getElementById('param-exploit').value;
+                parameters.payload = document.getElementById('param-payload').value;
+            } else if (type === 'exploit_adaptation') {
+                parameters.cves = document.getElementById('param-cves').value;
+            }
+            fetch('/api/manual_action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: type, target, parameters})
+            }).then(res => res.json()).then(resp => {
+                alert(resp.status || resp.error || 'Azione inviata');
+                modal.classList.add('hidden');
+            });
+        };
+        // Chiudi modale
+        modal.querySelector('.close-action-modal').onclick = function() {
+            modal.classList.add('hidden');
+        };
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
+    }
+
+    // Modale Dettagli Exploit Chain
+    function showExploitDetailModal(target, exploitChain, compromisedAssets, fullAssetData) {
+        const modal = document.getElementById('exploit-detail-modal');
+        document.getElementById('exploit-detail-target').textContent = target;
+        document.getElementById('exploit-chain-json').textContent = JSON.stringify(exploitChain, null, 2);
+        
+        const compromisedList = document.getElementById('compromised-assets-list');
+        compromisedList.innerHTML = '';
+        if (compromisedAssets && compromisedAssets.length > 0) {
+            compromisedAssets.forEach(asset => {
+                const li = document.createElement('li');
+                li.textContent = `IP: ${asset.ip}, Type: ${asset.type}, Access: ${asset.access_level || 'N/A'}`;
+                compromisedList.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'Nessun asset compromesso rilevato.';
+            compromisedList.appendChild(li);
+        }
+
+        document.getElementById('full-asset-json').textContent = JSON.stringify(fullAssetData, null, 2);
+        modal.classList.remove('hidden');
+
+        document.getElementById('close-exploit-detail-btn').onclick = function() {
+            modal.classList.add('hidden');
+        };
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
+    }
+
+    function showNotification(msg) {
+        const notif = document.createElement('div');
+        notif.className = 'realtime-notification';
+        notif.textContent = msg;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 6000);
+    }
+    document.getElementById('export-burp-btn').onclick = function() {
+        window.open('/api/export_burp', '_blank');
+    };
+    document.getElementById('export-json-btn').onclick = function() {
+        window.open('/api/export_json', '_blank');
+    };
+    </script>
+    <style>
+    .graph-modal { display: flex; align-items: center; justify-content: center; position: fixed; z-index: 2000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); }
+    .graph-modal.hidden { display: none; }
+    .graph-modal-content { background: #222; padding: 2em; border-radius: 12px; box-shadow: 0 0 30px #000; position: relative; min-width: 60vw; max-width: 90vw; }
+    .close-graph-btn { position: absolute; top: 10px; right: 20px; font-size: 2em; color: #fff; cursor: pointer; }
+    #graph { margin-top: 1em; }
+    #open-graph-btn { font-size: 1.1em; padding: 0.7em 1.5em; }
+    #graph-controls { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); z-index: 2100; background: rgba(34,34,34,0.95); padding: 0.7em 2em; border-radius: 8px; box-shadow: 0 0 10px #000; }
+    #graph-controls label, #graph-controls select { font-size: 1em; margin-right: 1em; }
+    .interesting-panel { background: #181818; border-radius: 10px; margin: 2em 0; padding: 1.5em; box-shadow: 0 0 10px #000; }
+    .interesting-list { margin-top: 1em; }
+    .interesting-item { display: flex; align-items: center; gap: 1em; background: #232323; border-radius: 6px; padding: 0.7em 1em; margin-bottom: 0.7em; }
+    .interesting-badge { font-size: 1.5em; }
+    .interesting-ip { font-family: 'Share Tech Mono', monospace; font-size: 1.1em; color: #4caf50; }
+    .interesting-motivation { flex: 1; color: #fff; font-size: 1em; }
+    .interesting-action { background: #f44336; color: #fff; border: none; border-radius: 4px; padding: 0.4em 1em; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .interesting-action:hover { background: #d32f2f; }
+    .no-interesting { text-align: center; color: #888; margin: 2em 0; }
+    .no-interesting-icon { font-size: 2.5em; }
+    .action-modal { display: flex; align-items: center; justify-content: center; position: fixed; z-index: 3000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); }
+    .action-modal.hidden { display: none; }
+    .action-modal-content { background: #232323; padding: 2em; border-radius: 12px; box-shadow: 0 0 30px #000; position: relative; min-width: 350px; max-width: 90vw; }
+    .close-action-modal { position: absolute; top: 10px; right: 20px; font-size: 2em; color: #fff; cursor: pointer; }
+    #action-params label { color: #fff; margin-top: 1em; display: block; }
+    #action-params input { width: 100%; margin-bottom: 1em; padding: 0.4em; border-radius: 4px; border: 1px solid #444; background: #181818; color: #fff; }
+    #launch-action-btn { margin-top: 1em; }
+    .realtime-notification {
+        position: fixed; bottom: 40px; right: 40px; background: #f44336; color: #fff;
+        padding: 1em 2em; border-radius: 8px; font-size: 1.2em; z-index: 4000;
+        box-shadow: 0 0 20px #000; animation: fadein 0.5s;
+    }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Exploit Chain specific styles */
+    .exploit-chain-details {
+        display: flex;
+        gap: 0.5em;
+        margin-left: auto; /* Pushes it to the right */
+    }
+    .ec-badge {
+        background: #555;
+        color: #eee;
+        padding: 0.2em 0.5em;
+        border-radius: 4px;
+        font-size: 0.8em;
+        white-space: nowrap;
+    }
+    .ec-status-success { background: #4CAF50; } /* Green */
+    .ec-status-failed { background: #F44336; } /* Red */
+    .ec-status-in_progress { background: #FFC107; color: #333; } /* Amber */
+    .ec-status-pending { background: #2196F3; } /* Blue */
+    .ec-compromised { background: #9C27B0; } /* Purple */
+
+    /* Exploit Detail Modal styles */
+    .exploit-detail-modal { display: flex; align-items: center; justify-content: center; position: fixed; z-index: 3500; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); }
+    .exploit-detail-modal.hidden { display: none; }
+    .exploit-detail-modal-content { background: #1a1a1a; padding: 2.5em; border-radius: 15px; box-shadow: 0 0 40px rgba(0,255,0,0.3); position: relative; min-width: 70vw; max-width: 95vw; max-height: 90vh; overflow-y: auto; border: 1px solid #0f0; }
+    .close-exploit-detail-btn { position: absolute; top: 15px; right: 25px; font-size: 2.5em; color: #0f0; cursor: pointer; transition: color 0.2s; }
+    .close-exploit-detail-btn:hover { color: #fff; }
+    .exploit-detail-modal-content h3 { color: #0f0; text-align: center; margin-bottom: 1.5em; font-size: 1.8em; text-shadow: 0 0 8px #0f0; }
+    .exploit-detail-modal-content h4 { color: #00ff00; margin-top: 1.5em; margin-bottom: 0.8em; border-bottom: 1px solid #055; padding-bottom: 0.5em; font-size: 1.3em; }
+    .detail-section pre {
+        background: #0a0a0a;
+        color: #0f0;
+        border: 1px solid #055;
+        border-radius: 8px;
+        padding: 1em;
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.9em;
+        white-space: pre-wrap; /* Ensures long lines wrap */
+        word-break: break-all; /* Breaks words if necessary */
+    }
+    .detail-section ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    .detail-section ul li {
+        background: #0a0a0a;
+        color: #00ff00;
+        border: 1px solid #055;
+        border-radius: 5px;
+        padding: 0.7em 1em;
+        margin-bottom: 0.5em;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.95em;
+    }
+    </style>
+</body>
+</html>

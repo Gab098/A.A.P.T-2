@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-conn
+  namespace: aapt
+stringData:
+  RABBITMQ_CONN: "amqp://aapt_user:aapt_secret_pw@rabbitmq:5672/"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: nmap-worker-autoscale
+  namespace: aapt
+spec:
+  scaleTargetRef:
+    name: nmap-worker
+  pollingInterval: 15
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: nmap_tasks
+        queueLength: "10"
+        hostFromEnv: RABBITMQ_CONN
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: subfinder-worker-autoscale
+  namespace: aapt
+spec:
+  scaleTargetRef:
+    name: subfinder-worker
+  pollingInterval: 15
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: subfinder_tasks
+        queueLength: "5"
+        hostFromEnv: RABBITMQ_CONN
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: httpx-worker-autoscale
+  namespace: aapt
+spec:
+  scaleTargetRef:
+    name: httpx-worker
+  pollingInterval: 15
+  minReplicaCount: 1
+  maxReplicaCount: 4
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: httpx_tasks
+        queueLength: "8"
+        hostFromEnv: RABBITMQ_CONN
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: nuclei-worker-autoscale
+  namespace: aapt
+spec:
+  scaleTargetRef:
+    name: nuclei-worker
+  pollingInterval: 20
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: nuclei_tasks
+        queueLength: "5"
+        hostFromEnv: RABBITMQ_CONN

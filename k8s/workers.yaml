@@ -1,0 +1,660 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nmap-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nmap-worker
+  template:
+    metadata:
+      labels:
+        app: nmap-worker
+    spec:
+      containers:
+        - name: nmap-worker
+          image: aapt/nmap_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: AAPT_NMAP_TIMING
+              value: T3
+            - name: AAPT_NMAP_RANDOMIZE_HOSTS
+              value: "false"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuclei-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nuclei-worker
+  template:
+    metadata:
+      labels:
+        app: nuclei-worker
+    spec:
+      containers:
+        - name: nuclei-worker
+          image: aapt/nuclei_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amass-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amass-worker
+  template:
+    metadata:
+      labels:
+        app: amass-worker
+    spec:
+      containers:
+        - name: amass-worker
+          image: aapt/amass_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8084
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subfinder-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subfinder-worker
+  template:
+    metadata:
+      labels:
+        app: subfinder-worker
+    spec:
+      containers:
+        - name: subfinder-worker
+          image: aapt/subfinder_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: masscan-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: masscan-worker
+  template:
+    metadata:
+      labels:
+        app: masscan-worker
+    spec:
+      containers:
+        - name: masscan-worker
+          image: aapt/masscan_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: AAPT_MASSCAN_RATE
+              value: "1000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msf-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: msf-worker
+  template:
+    metadata:
+      labels:
+        app: msf-worker
+    spec:
+      containers:
+        - name: msf-worker
+          image: aapt/msf_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: privesc-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: privesc-worker
+  template:
+    metadata:
+      labels:
+        app: privesc-worker
+    spec:
+      containers:
+        - name: privesc-worker
+          image: aapt/privesc_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8089
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: AAPT_OUTPUT_DIR
+              value: /app/logs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shodan-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shodan-worker
+  template:
+    metadata:
+      labels:
+        app: shodan-worker
+    spec:
+      containers:
+        - name: shodan-worker
+          image: aapt/shodan_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8086
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: SHODAN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: shodan-secret
+                  key: api_key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: censys-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: censys-worker
+  template:
+    metadata:
+      labels:
+        app: censys-worker
+    spec:
+      containers:
+        - name: censys-worker
+          image: aapt/censys_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8087
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: CENSYS_API_ID
+              valueFrom:
+                secretKeyRef:
+                  name: censys-secret
+                  key: api_id
+            - name: CENSYS_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: censys-secret
+                  key: api_secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpx-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpx-worker
+  template:
+    metadata:
+      labels:
+        app: httpx-worker
+    spec:
+      containers:
+        - name: httpx-worker
+          image: aapt/httpx_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: AAPT_HTTPX_THREADS
+              value: "50"
+            - name: AAPT_HTTPX_RATE_LIMIT
+              value: "150"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnsx-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dnsx-worker
+  template:
+    metadata:
+      labels:
+        app: dnsx-worker
+    spec:
+      containers:
+        - name: dnsx-worker
+          image: aapt/dnsx_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8091
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: AAPT_DNSX_THREADS
+              value: "100"
+            - name: AAPT_DNSX_RATE_LIMIT
+              value: "1000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cve-enrichment-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cve-enrichment-worker
+  template:
+    metadata:
+      labels:
+        app: cve-enrichment-worker
+    spec:
+      containers:
+        - name: cve-enrichment-worker
+          image: aapt/cve_enrichment_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8092
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: NVD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nvd-secret
+                  key: api_key
+                  optional: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-recon-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud-recon-worker
+  template:
+    metadata:
+      labels:
+        app: cloud-recon-worker
+    spec:
+      containers:
+        - name: cloud-recon-worker
+          image: aapt/cloud_recon_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: AWS_PROFILE
+              value: "default" # Default AWS profile, can be overridden by a secret
+            - name: AZURE_SUBSCRIPTION_ID
+              value: "" # Azure subscription ID, can be overridden by a secret
+          command: ["python", "main.py"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threat-intel-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threat-intel-worker
+  template:
+    metadata:
+      labels:
+        app: threat-intel-worker
+    spec:
+      containers:
+        - name: threat-intel-worker
+          image: aapt/threat_intel_worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: VIRUSTOTAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: threat-intel-secret
+                  key: virustotal_api_key
+                  optional: true
+            - name: ABUSEIPDB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: threat-intel-secret
+                  key: abuseipdb_api_key
+                  optional: true
+          command: ["python", "main.py"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exploit-adaptation-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exploit-adaptation-worker
+  template:
+    metadata:
+      labels:
+        app: exploit-adaptation-worker
+    spec:
+      containers:
+        - name: exploit-adaptation-worker
+          image: aapt/exploit_adaptation_worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8093
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api_key
+                  optional: true
+          command: ["python", "main.py"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator-v3
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestrator-v3
+  template:
+    metadata:
+      labels:
+        app: orchestrator-v3
+    spec:
+      containers:
+        - name: orchestrator-v3
+          image: aapt/orchestrator:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5152
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+            - name: ORCH_HEALTH_PORT
+              value: "5152"
+            - name: AAPT_PASSIVE_INTERVAL
+              value: "300"
+            - name: AAPT_SUBDOMAIN_REFRESH_HOURS
+              value: "24"
+            - name: AAPT_HTTP_PROBE_REFRESH_HOURS
+              value: "12"
+            - name: PRIORITIZER_URL
+              value: "http://prioritizer:8080"
+            - name: LLM_ROUTER_URL
+              value: "http://llm-router:8082"
+          command: ["python", "orchestrator_v3.py"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-worker
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reporting-worker
+  template:
+    metadata:
+      labels:
+        app: reporting-worker
+    spec:
+      containers:
+        - name: reporting-worker
+          image: aapt/reporting_worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: aapt_secret_db_pw
+          command: ["python", "main.py"]

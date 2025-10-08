@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aapt-ui
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aapt-ui
+  template:
+    metadata:
+      labels:
+        app: aapt-ui
+    spec:
+      containers:
+        - name: ui
+          image: aapt/ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_USER
+              value: aapt_user
+            - name: RABBITMQ_PASS
+              value: aapt_secret_pw
+            - name: NET_GATEWAY_URL
+              value: "http://net-gateway:8081"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aapt-ui
+  namespace: aapt
+spec:
+  selector:
+    app: aapt-ui
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  type: NodePort

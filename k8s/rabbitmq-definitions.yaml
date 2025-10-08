@@ -1,0 +1,152 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-definitions
+  namespace: aapt
+data:
+  definitions.json: |
+    {
+      "vhosts": [{ "name": "/" }],
+      "users": [
+        {
+          "name": "aapt_user",
+          "password": "aapt_secret_pw",
+          "tags": "administrator"
+        }
+      ],
+      "permissions": [
+        { "user": "aapt_user", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" }
+      ],
+      "exchanges": [
+        { "name": "aapt.tasks", "vhost": "/", "type": "direct", "durable": true },
+        { "name": "aapt.results", "vhost": "/", "type": "fanout", "durable": true },
+        { "name": "aapt.dlq", "vhost": "/", "type": "direct", "durable": true },
+        { "name": "aapt.retry", "vhost": "/", "type": "direct", "durable": true }
+      ],
+      "queues": [
+        {
+          "name": "nmap_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "nmap_tasks_dlq"
+          }
+        },
+        {
+          "name": "nmap_tasks_retry", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-message-ttl": 60000,
+            "x-dead-letter-exchange": "aapt.tasks",
+            "x-dead-letter-routing-key": "nmap_tasks"
+          }
+        },
+        { "name": "nmap_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "subfinder_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "subfinder_tasks_dlq"
+          }
+        },
+        {
+          "name": "subfinder_tasks_retry", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-message-ttl": 60000,
+            "x-dead-letter-exchange": "aapt.tasks",
+            "x-dead-letter-routing-key": "subfinder_tasks"
+          }
+        },
+        { "name": "subfinder_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "amass_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "amass_tasks_dlq"
+          }
+        },
+        { "name": "amass_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "masscan_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "masscan_tasks_dlq"
+          }
+        },
+        { "name": "masscan_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "nuclei_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "nuclei_tasks_dlq"
+          }
+        },
+        { "name": "nuclei_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "msf_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "msf_tasks_dlq"
+          }
+        },
+        { "name": "msf_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "privesc_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "privesc_tasks_dlq"
+          }
+        },
+        { "name": "privesc_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "httpx_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "httpx_tasks_dlq"
+          }
+        },
+        { "name": "httpx_tasks_dlq", "vhost": "/", "durable": true },
+        
+        {
+          "name": "dnsx_tasks", "vhost": "/", "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "aapt.dlq",
+            "x-dead-letter-routing-key": "dnsx_tasks_dlq"
+          }
+        },
+        { "name": "dnsx_tasks_dlq", "vhost": "/", "durable": true },
+        
+        { "name": "results_queue", "vhost": "/", "durable": true }
+      ],
+      "bindings": [
+        { "source": "aapt.tasks", "vhost": "/", "destination": "nmap_tasks", "destination_type": "queue", "routing_key": "nmap_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "subfinder_tasks", "destination_type": "queue", "routing_key": "subfinder_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "amass_tasks", "destination_type": "queue", "routing_key": "amass_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "masscan_tasks", "destination_type": "queue", "routing_key": "masscan_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "nuclei_tasks", "destination_type": "queue", "routing_key": "nuclei_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "msf_tasks", "destination_type": "queue", "routing_key": "msf_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "privesc_tasks", "destination_type": "queue", "routing_key": "privesc_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "httpx_tasks", "destination_type": "queue", "routing_key": "httpx_tasks" },
+        { "source": "aapt.tasks", "vhost": "/", "destination": "dnsx_tasks", "destination_type": "queue", "routing_key": "dnsx_tasks" },
+        
+        { "source": "aapt.retry", "vhost": "/", "destination": "nmap_tasks_retry", "destination_type": "queue", "routing_key": "nmap_tasks_retry" },
+        { "source": "aapt.retry", "vhost": "/", "destination": "subfinder_tasks_retry", "destination_type": "queue", "routing_key": "subfinder_tasks_retry" },
+        
+        { "source": "aapt.dlq", "vhost": "/", "destination": "nmap_tasks_dlq", "destination_type": "queue", "routing_key": "nmap_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "subfinder_tasks_dlq", "destination_type": "queue", "routing_key": "subfinder_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "amass_tasks_dlq", "destination_type": "queue", "routing_key": "amass_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "masscan_tasks_dlq", "destination_type": "queue", "routing_key": "masscan_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "nuclei_tasks_dlq", "destination_type": "queue", "routing_key": "nuclei_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "msf_tasks_dlq", "destination_type": "queue", "routing_key": "msf_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "privesc_tasks_dlq", "destination_type": "queue", "routing_key": "privesc_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "httpx_tasks_dlq", "destination_type": "queue", "routing_key": "httpx_tasks_dlq" },
+        { "source": "aapt.dlq", "vhost": "/", "destination": "dnsx_tasks_dlq", "destination_type": "queue", "routing_key": "dnsx_tasks_dlq" },
+        
+        { "source": "aapt.results", "vhost": "/", "destination": "results_queue", "destination_type": "queue", "routing_key": "" }
+      ]
+    }

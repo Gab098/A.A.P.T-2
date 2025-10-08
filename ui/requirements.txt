@@ -1,0 +1,5 @@
+flask
+neo4j
+prometheus_client
+requests
+weasyprint

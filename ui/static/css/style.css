@@ -1,0 +1,486 @@
+/* Reset e base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Share Tech Mono', monospace;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Container principale */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 2px solid rgba(0, 255, 65, 0.3);
+    margin-bottom: 30px;
+}
+
+.logo h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(45deg, #00ff41, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #888;
+    display: block;
+    margin-top: 5px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+    background: #00ff41;
+    box-shadow: 0 0 10px #00ff41;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Main Content */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* Control Panel */
+.control-panel {
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 255, 65, 0.1);
+}
+
+.control-panel h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ff41;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.scan-form {
+    margin-bottom: 25px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #00d4ff;
+    font-weight: bold;
+}
+
+.cyber-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(10, 10, 10, 0.8);
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.cyber-input::placeholder {
+    color: #666;
+}
+
+/* Cyber Button */
+.cyber-button {
+    position: relative;
+    width: 100%;
+    padding: 15px 30px;
+    background: linear-gradient(45deg, #00ff41, #00d4ff);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cyber-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 255, 65, 0.4);
+}
+
+.cyber-button:active {
+    transform: translateY(0);
+}
+
+.cyber-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.button-glow {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.cyber-button:hover .button-glow {
+    left: 100%;
+}
+
+/* Quick Targets */
+.quick-targets h3 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.target-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quick-target-btn {
+    padding: 10px 15px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quick-target-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+/* Results Panel */
+.results-panel {
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 255, 65, 0.1);
+}
+
+.results-panel h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ff41;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.results-container {
+    height: 400px;
+    overflow-y: auto;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.no-results-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+/* Result Item */
+.result-item {
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.result-item:hover {
+    border-color: rgba(0, 255, 65, 0.4);
+    box-shadow: 0 5px 15px rgba(0, 255, 65, 0.1);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.result-target {
+    font-weight: bold;
+    color: #00d4ff;
+}
+
+.result-timestamp {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.result-content {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.result-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.result-type.nmap {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+}
+
+.result-type.nuclei {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+}
+
+/* System Status */
+.system-status {
+    grid-column: 1 / -1;
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 255, 65, 0.1);
+}
+
+.system-status h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ff41;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.status-card {
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.status-card h3 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.status-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00ff41;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-content {
+    text-align: center;
+    color: #00ff41;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(0, 255, 65, 0.3);
+    border-top: 3px solid #00ff41;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    z-index: 1001;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: linear-gradient(45deg, #00ff41, #00d4ff);
+}
+
+.notification.error {
+    background: linear-gradient(45deg, #ff4444, #ff6b6b);
+}
+
+.notification.hidden {
+    display: none;
+}
+
+/* Scrollbar personalizzata */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(10, 10, 10, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #00ff41, #00d4ff);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #00d4ff, #00ff41);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .logo h1 {
+        font-size: 2rem;
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Threat Intelligence Badges */
+.threat-intel-details {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+
+.ti-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.vt-badge {
+    background-color: #e53935; /* Red for VirusTotal malicious */
+}
+
+.abuse-badge {
+    background-color: #fb8c00; /* Orange for AbuseIPDB score */
+}

@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opsec-profiles
+  namespace: aapt
+data:
+  default.env: |
+    # Default OPSEC Profile - Balanced speed and stealth
+    AAPT_NMAP_TIMING=T3
+    AAPT_NMAP_RANDOMIZE_HOSTS=true
+    AAPT_NMAP_MAX_RTT=1000ms
+    AAPT_MASSCAN_RATE=1000
+    AAPT_SUBFINDER_RATE=100
+    AAPT_HTTPX_THREADS=50
+    AAPT_HTTPX_RATE_LIMIT=150
+    AAPT_AMASS_TIMEOUT=10m
+    AAPT_DNSX_THREADS=100
+    AAPT_DNSX_RATE_LIMIT=1000
+  
+  stealth.env: |
+    # Stealth OPSEC Profile - Maximum evasion
+    AAPT_NMAP_TIMING=T1
+    AAPT_NMAP_RANDOMIZE_HOSTS=true
+    AAPT_NMAP_MAX_RTT=2000ms
+    AAPT_MASSCAN_RATE=200
+    AAPT_MASSCAN_EXCLUDES=127.0.0.1/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    AAPT_SUBFINDER_RATE=50
+    AAPT_HTTPX_THREADS=20
+    AAPT_HTTPX_RATE_LIMIT=50
+    AAPT_HTTPX_TIMEOUT=15
+    AAPT_AMASS_TIMEOUT=20m
+    AAPT_AMASS_MAX_DNS=500
+    AAPT_DNSX_THREADS=50
+    AAPT_DNSX_RATE_LIMIT=500
+  
+  aggressive.env: |
+    # Aggressive OPSEC Profile - Maximum speed
+    AAPT_NMAP_TIMING=T4
+    AAPT_NMAP_RANDOMIZE_HOSTS=false
+    AAPT_NMAP_MAX_RTT=500ms
+    AAPT_MASSCAN_RATE=2000
+    AAPT_SUBFINDER_RATE=200
+    AAPT_HTTPX_THREADS=100
+    AAPT_HTTPX_RATE_LIMIT=300
+    AAPT_HTTPX_TIMEOUT=5
+    AAPT_AMASS_TIMEOUT=5m
+    AAPT_DNSX_THREADS=200
+    AAPT_DNSX_RATE_LIMIT=2000
+  
+  red_team.env: |
+    # Red Team OPSEC Profile - Advanced evasion techniques
+    AAPT_NMAP_TIMING=T2
+    AAPT_NMAP_RANDOMIZE_HOSTS=true
+    AAPT_NMAP_MAX_RTT=1500ms
+    AAPT_MASSCAN_RATE=500
+    AAPT_MASSCAN_SRC_PORT=53
+    AAPT_SUBFINDER_RATE=30
+    AAPT_HTTPX_THREADS=25
+    AAPT_HTTPX_RATE_LIMIT=75
+    AAPT_HTTPX_TIMEOUT=12
+    AAPT_HTTPX_RETRIES=1
+    AAPT_AMASS_TIMEOUT=15m
+    AAPT_AMASS_MAX_DNS=300
+    AAPT_DNSX_THREADS=75
+    AAPT_DNSX_RATE_LIMIT=750
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opsec-manager
+  namespace: aapt
+data:
+  apply_profile.py: |
+    #!/usr/bin/env python3
+    """
+    OPSEC Profile Manager - Apply profiles to worker deployments
+    Usage: python apply_profile.py <profile_name>
+    """
+    import os
+    import sys
+    import subprocess
+    
+    def apply_profile(profile_name):
+        """Apply OPSEC profile to all workers"""
+        valid_profiles = ['default', 'stealth', 'aggressive', 'red_team']
+        
+        if profile_name not in valid_profiles:
+            print(f"Invalid profile. Choose from: {', '.join(valid_profiles)}")
+            return False
+        
+        # Read profile configuration
+        config_file = f"/etc/opsec-profiles/{profile_name}.env"
+        if not os.path.exists(config_file):
+            print(f"Profile file not found: {config_file}")
+            return False
+        
+        env_vars = {}
+        with open(config_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    env_vars[key] = value
+        
+        # Apply to worker deployments
+        workers = [
+            'nmap-worker', 'subfinder-worker', 'amass-worker', 
+            'masscan-worker', 'httpx-worker', 'dnsx-worker'
+        ]
+        
+        for worker in workers:
+            print(f"Applying {profile_name} profile to {worker}...")
+            
+            # Build kubectl patch command
+            patch_data = {"spec": {"template": {"spec": {"containers": [{"name": worker.replace('-', '_'), "env": []}]}}}}
+            
+            for key, value in env_vars.items():
+                patch_data["spec"]["template"]["spec"]["containers"][0]["env"].append({
+                    "name": key,
+                    "value": value
+                })
+            
+            # Apply patch
+            cmd = [
+                "kubectl", "patch", "deployment", worker,
+                "-n", "aapt",
+                "--type", "merge",
+                "-p", str(patch_data).replace("'", '"')
+            ]
+            
+            try:
+                subprocess.run(cmd, check=True, capture_output=True)
+                print(f"✓ {worker} updated")
+            except subprocess.CalledProcessError as e:
+                print(f"✗ Failed to update {worker}: {e}")
+        
+        print(f"\nOPSEC profile '{profile_name}' applied successfully!")
+        return True
+    
+    if __name__ == "__main__":
+        if len(sys.argv) != 2:
+            print("Usage: python apply_profile.py <profile_name>")
+            sys.exit(1)
+        
+        profile = sys.argv[1]
+        success = apply_profile(profile)
+        sys.exit(0 if success else 1)

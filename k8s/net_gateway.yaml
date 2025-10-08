@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: net-gateway
+  namespace: aapt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: net-gateway
+  template:
+    metadata:
+      labels:
+        app: net-gateway
+    spec:
+      containers:
+        - name: net-gateway
+          image: aapt/net_gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: INTERNET_ACCESS
+              value: "gateway"
+            - name: VM_MODE
+              value: "false"
+            - name: ALLOWED_HOSTS
+              value: ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: net-gateway
+  namespace: aapt
+spec:
+  selector:
+    app: net-gateway
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081

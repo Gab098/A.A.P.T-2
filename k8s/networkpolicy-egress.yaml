@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress-default
+  namespace: aapt
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-net-gateway
+  namespace: aapt
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: net-gateway
+      ports:
+        - protocol: TCP
+          port: 8081
