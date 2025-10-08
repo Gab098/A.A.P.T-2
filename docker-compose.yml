@@ -1,0 +1,379 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # UI Web per il management
+    environment:
+      - RABBITMQ_DEFAULT_USER=aapt_user
+      - RABBITMQ_DEFAULT_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1 # Usa una password più sicura in produzione
+
+  neo4j:
+    image: neo4j:4.4
+    container_name: neo4j
+    ports:
+      - "7474:7474" # UI Web per il browser Neo4j
+      - "7687:7687" # Porta per il protocollo Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3 # Usa una password più sicura
+    volumes:
+      - neo4j_data:/data
+
+  nmap_worker:
+    build: ./workers/nmap_worker # Dice a Docker Compose di costruire l'immagine da questo path
+    container_name: nmap_worker
+    depends_on: # Il worker non parte se RabbitMQ e Neo4j non sono pronti
+      - rabbitmq
+      - neo4j
+    environment: # Passiamo le credenziali come variabili d'ambiente
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - NMAP_PORTS=22,80,443,8080,3389,445,21,23,25,53,110,139,143,3306,5432,5900,8081,8443
+      - NMAP_TIMEOUT=30s
+      - NMAP_TOP_PORTS=100
+    command: python main.py
+    ports:
+      - "8080:8080" # Healthcheck HTTP
+
+  nuclei_worker:
+    build: ./workers/nuclei_worker
+    container_name: nuclei_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - NUCLEI_TIMEOUT=300
+      - NUCLEI_SEVERITY=low,medium,high,critical
+    command: python main.py
+    ports:
+      - "8082:8080" # Healthcheck HTTP nuclei_worker
+
+  orchestrator:
+    build: ./orchestrator
+    container_name: orchestrator
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - ORCH_HEALTH_PORT=8080
+    command: python main.py
+    ports:
+      - "8080:8080" # Healthcheck HTTP orchestrator
+
+  orchestrator_v2:
+    build: ./orchestrator
+    container_name: orchestrator_v2
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - ORCH_HEALTH_PORT=5151
+    volumes:
+      - ../models:/app/models  # Monta i modelli LLM
+    command: python orchestrator_v2.py
+    ports:
+      - "5151:5151" # Healthcheck HTTP orchestrator V2
+    profiles:
+      - autonomous  # Solo quando si vuole usare la modalità autonoma
+
+  ui:
+    build: ./ui
+    container_name: aapt_ui
+    ports:
+      - "5000:5000" # Dashboard web
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+    command: python app.py
+
+  msf_worker:
+    build: ./workers/msf_worker
+    container_name: msf_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+    ports:
+      - "8088:8088" # Healthcheck HTTP
+
+  privesc_worker:
+    build: ./workers/privesc_worker
+    container_name: privesc_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python3 main.py
+
+  amass_worker:
+    build: ./workers/amass_worker
+    container_name: amass_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+    ports:
+      - "8084:8084" # Healthcheck HTTP
+
+  masscan_worker:
+    build: ./workers/masscan_worker
+    container_name: masscan_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+    ports:
+      - "8085:8085" # Healthcheck HTTP
+
+  subfinder_worker:
+    build: ./workers/subfinder_worker
+    container_name: subfinder_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+    ports:
+      - "8083:8083" # Healthcheck HTTP
+
+  shodan_worker:
+    build: ./workers/shodan_worker
+    container_name: shodan_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - SHODAN_API_KEY= # Imposta la tua API key
+    command: python main.py
+    ports:
+      - "8086:8086" # Healthcheck HTTP
+
+  censys_worker:
+    build: ./workers/censys_worker
+    container_name: censys_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - CENSYS_API_ID= # Imposta la tua API ID
+      - CENSYS_API_SECRET= # Imposta la tua API secret
+    command: python main.py
+    ports:
+      - "8087:8087" # Healthcheck HTTP
+
+  httpx_worker:
+    build: ./workers/httpx_worker
+    container_name: httpx_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - AAPT_HTTPX_THREADS=50
+      - AAPT_HTTPX_RATE_LIMIT=150
+    command: python main.py
+    ports:
+      - "8090:8090" # Healthcheck HTTP
+
+  dnsx_worker:
+    build: ./workers/dnsx_worker
+    container_name: dnsx_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - AAPT_DNSX_THREADS=100
+      - AAPT_DNSX_RATE_LIMIT=1000
+    command: python main.py
+    ports:
+      - "8091:8091" # Healthcheck HTTP
+
+  cve_enrichment_worker:
+    build: ./workers/cve_enrichment_worker
+    container_name: cve_enrichment_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - NVD_API_KEY= # Set your NVD API key
+    command: python main.py
+    ports:
+      - "8092:8092" # Healthcheck HTTP
+
+  cloud_recon_worker:
+    build: ./workers/cloud_recon_worker
+    container_name: cloud_recon_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+    ports:
+      - "8094:8080" # Healthcheck HTTP
+
+  threat_intel_worker:
+    build: ./workers/threat_intel_worker
+    container_name: threat_intel_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - VIRUSTOTAL_API_KEY=your_virustotal_key_here # Imposta la tua API key
+      - ABUSEIPDB_API_KEY=your_abuseipdb_key_here # Imposta la tua API key
+    command: python main.py
+    # No specific port exposed for healthcheck as it's a consumer-only worker for now.
+
+  exploit_adaptation_worker:
+    build: ./workers/exploit_adaptation_worker
+    container_name: exploit_adaptation_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO44J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - OPENAI_API_KEY=your_openai_api_key_here # Imposta la tua API key
+    command: python main.py
+    ports:
+      - "8093:8093" # Healthcheck HTTP
+
+  reporting_worker:
+    build: ./workers/reporting_worker
+    container_name: reporting_worker
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+    command: python main.py
+
+  orchestrator_v3:
+    build: ./orchestrator
+    container_name: orchestrator_v3
+    depends_on:
+      - rabbitmq
+      - neo4j
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=aapt_user
+      - RABBITMQ_PASS=wbja*Vg8#V&83#BrfYDsM5UfDbtYb#e1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=6mFlblEn@^mTKP!sgJSZswiClqYo^2Q3
+      - ORCH_HEALTH_PORT=5152
+      - AAPT_PASSIVE_INTERVAL=300
+      - AAPT_SUBDOMAIN_REFRESH_HOURS=24
+      - AAPT_HTTP_PROBE_REFRESH_HOURS=12
+    command: python orchestrator_v3.py
+    ports:
+      - "5152:5152" # Healthcheck HTTP orchestrator V3
+    profiles:
+      - autonomous  # Solo quando si vuole usare la modalità autonoma
+
+volumes:
+  neo4j_data: # Volume persistente per non perdere i dati del grafo
